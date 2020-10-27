@@ -15,57 +15,37 @@ from sklearn.ensemble import RandomForestClassifier
 import mlflow
 import mlflow.sklearn
 
-from preprocessing_data import preprocessing
+from preprocessing_data import preprocessing_train, preprocessing_test
 
 import logging
 logging.basicConfig(level=logging.WARN)
 logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
+
     warnings.filterwarnings("ignore")
     np.random.seed(40)
 
-    # Read the wine-quality csv file from the URL
-    train = preprocessing()
+    train = preprocessing_train()
 
     X = train.drop(columns=['TARGET'])
     y = train['TARGET']
 
-    # Split the data into training and test sets. (0.75, 0.25) split.
-    seed = 7
-    test_size = 0.33
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=seed)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=42)
 
     sc = StandardScaler()
     X_train = sc.fit_transform(X_train)
     X_test = sc.transform(X_test)
 
-    # fit model no training data
-
-    # The predicted column is "quality" which is a scalar from [3, 9]
-
-    # Set default values if no alpha is provided
-  
-    """print('learning_rate: ')
-    lr = float(input())
-    print('n_estimators: ')
-    ne = int(input())
-    print('n_jobs: ')
-    nj = int(input())"""
-
-
     lr = float(sys.argv[1]) if len(sys.argv) > 1 else 0.1
     ne = int(sys.argv[2]) if len(sys.argv) > 500 else 100
     nj = int(sys.argv[3]) if len(sys.argv) > 3 else 1
 
-    # Useful for multiple runs (only doing one run in this sample notebook)    
     with mlflow.start_run():
-        # Execute ElasticNet
+
         classifier = RandomForestClassifier(n_estimators=20, random_state=0)
         classifier.fit(X_train, y_train)
         predicted_qualities = classifier.predict(X_test)
-        # Evaluate Metrics
-        #(rmse, mae, r2) = eval_metrics(y_test, predicted_qualities)
 
         precision,recall,fscore,support=score(y_test, predicted_qualities)
         precision0 = precision[0]
@@ -79,14 +59,8 @@ if __name__ == "__main__":
 
         accuracy = accuracy_score(y_test, predicted_qualities)
 
-        # Print out metrics
-        print("XGB Model (learning_rate=%f, n_estimators=%f, n_jobs=%f):" % (lr, ne, nj))
-        #print("  Precision: %s" % precision)
-        #print("  Recall: %s" % recall)
-        #print("  Fscore: %s" % fscore)
-        #print("  Support: %s" % support)
+        print("RandomForest Model (learning_rate=%f, n_estimators=%f, n_jobs=%f):" % (lr, ne, nj))
 
-        # Log parameter, metrics, and model to MLflow
         mlflow.log_param("learning_rate", lr)
         mlflow.log_param("n_estimators", ne)
         mlflow.log_param("n_jobs", nj)
